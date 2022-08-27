@@ -1,0 +1,9 @@
+(executable
+ (public_name HumphreyJr)
+ (name main)
+ (libraries HumphreyJr unix))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
