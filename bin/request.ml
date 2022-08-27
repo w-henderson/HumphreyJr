@@ -1,5 +1,3 @@
-open Unix
-
 exception InvalidRequest
 
 type method_ = Get | Post | Put | Delete | Head | Options
@@ -42,25 +40,33 @@ let method_of_string string =
   | "OPTIONS" -> Options
   | _ -> raise InvalidRequest
 
+let is_keep_alive request =
+  List.exists
+    (fun (name, value) ->
+      String.lowercase_ascii name = "connection"
+      && String.lowercase_ascii value = "keep-alive")
+    request.headers
+
 let parse_header header =
   match String.split_on_char ':' header with
   | name :: value -> (String.trim name, String.trim (String.concat ":" value))
   | _ -> raise InvalidRequest
 
-let parse_request stream =
-  let channel = in_channel_of_descr stream in
+let parse_request channel =
   let first_line = input_line channel in
   let method_, url =
     match String.split_on_char ' ' first_line with
     | [ method_; url; _ ] -> (method_of_string method_, url)
     | _ -> raise InvalidRequest
   in
+
   let rec parse_headers headers =
     let line = input_line channel in
     if line = "\r" then headers
     else parse_headers (headers @ [ parse_header line ])
   in
   let headers = parse_headers [] in
+
   let content_length =
     match
       List.find_opt
@@ -70,6 +76,7 @@ let parse_request stream =
     | Some (_, value) -> int_of_string value
     | None -> 0
   in
+
   let body =
     if content_length == 0 then None
     else
@@ -77,4 +84,5 @@ let parse_request stream =
       let _ = really_input channel buf 0 content_length in
       Some buf
   in
+
   { method_; url; headers; body }
