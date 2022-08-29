@@ -1,2 +1,3 @@
 (library
- (name HumphreyJr))
+ (name HumphreyJr)
+ (libraries unix))
