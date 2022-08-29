@@ -2,23 +2,31 @@ open Unix
 open Request
 open Response
 
-type handler = string * (request -> response)
+type 'state handler = string * (request * 'state -> response * 'state)
 
-class app =
+class ['state] app state =
   object (self)
-    val mutable handlers : handler list = []
+    val mutable handlers : 'state handler list = []
+    val mutable state : 'state = state
+    val state_lock = Mutex.create ()
     method add_route route handler = handlers <- (route, handler) :: handlers
+
+    method add_stateless_route route handler =
+      handlers <- (route, fun (req, state) -> (handler req, state)) :: handlers
 
     method request_handler in_channel out_channel =
       let request = parse_request in_channel in
       let handler =
         List.find_opt (fun (route, _) -> route = request.url) handlers
       in
-      let response =
+      let response, new_state =
         match handler with
-        | Some (_, handler) -> handler request
-        | None -> response 404 "Not Found"
+        | Some (_, handler) -> handler (request, state)
+        | None -> (response 404 "Not Found", state)
       in
+      Mutex.lock state_lock;
+      state <- new_state;
+      Mutex.unlock state_lock;
       let is_keep_alive = is_keep_alive request in
       let response = set_keep_alive response is_keep_alive in
 
@@ -44,7 +52,7 @@ class app =
         close stream
       with _ ->
         ();
-        exit 0
+        Thread.exit ()
 
     method start port =
       let sock = socket PF_INET SOCK_STREAM 0 in
@@ -52,8 +60,9 @@ class app =
       listen sock 16;
       let rec loop () =
         let stream, _ = accept sock in
-        match fork () with 0 -> self#stream_handler stream | _ -> loop ()
+        let _ = Thread.create self#stream_handler stream in
+        loop ();
+        ()
       in
-      loop ();
-      ()
+      loop ()
   end

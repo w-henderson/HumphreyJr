@@ -1,3 +1,3 @@
 (library
  (name HumphreyJr)
- (libraries unix))
+ (libraries unix threads))
