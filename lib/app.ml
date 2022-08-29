@@ -19,12 +19,12 @@ class ['state] app state =
       let handler =
         List.find_opt (fun (route, _) -> route = request.url) handlers
       in
+      Mutex.lock state_lock;
       let response, new_state =
         match handler with
         | Some (_, handler) -> handler (request, state)
         | None -> (response 404 "Not Found", state)
       in
-      Mutex.lock state_lock;
       state <- new_state;
       Mutex.unlock state_lock;
       let is_keep_alive = is_keep_alive request in
