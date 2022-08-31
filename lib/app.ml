@@ -1,6 +1,7 @@
 open Unix
 open Request
 open Response
+open Wildcard
 
 type 'state handler = string * (request * 'state -> response * 'state)
 
@@ -17,7 +18,9 @@ class ['state] app state =
     method request_handler in_channel out_channel =
       let request = parse_request in_channel in
       let handler =
-        List.find_opt (fun (route, _) -> route = request.url) handlers
+        List.find_opt
+          (fun (route, _) -> wildcard_match route request.url)
+          handlers
       in
       Mutex.lock state_lock;
       let response, new_state =

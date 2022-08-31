@@ -1,3 +1,8 @@
 (library
  (name HumphreyJr)
  (libraries unix threads))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
