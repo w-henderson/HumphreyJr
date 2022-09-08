@@ -16,4 +16,5 @@ let () =
   let app = new App.app 0 in
   app#add_route "/" index_handler;
   app#add_stateless_route "/wild*" wild_handler;
+  app#add_static_route "/static/*" "/mnt/c/var/www";
   app#start 8000

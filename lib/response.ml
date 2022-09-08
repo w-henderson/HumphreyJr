@@ -38,6 +38,13 @@ let response status body =
 let response_binary status body =
   { status; headers = default_headers (Bytes.length body); body }
 
+let add_header response name value =
+  {
+    status = response.status;
+    headers = response.headers @ [ (name, value) ];
+    body = response.body;
+  }
+
 let set_keep_alive response keep_alive =
   if keep_alive then
     {

@@ -15,6 +15,9 @@ class ['state] app state =
     method add_stateless_route route handler =
       handlers <- (route, fun (req, state) -> (handler req, state)) :: handlers
 
+    method add_static_route route directory =
+      self#add_stateless_route route (Static.handle route directory)
+
     method request_handler in_channel out_channel =
       let request = parse_request in_channel in
       let handler =
