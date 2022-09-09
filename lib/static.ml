@@ -23,20 +23,31 @@ let rec contains s p =
     | false -> contains (String.sub s 0 (String.length s - 1)) p
   with Invalid_argument _ -> false
 
+let serve path =
+  try
+    let ic = open_in_bin path in
+    let len = in_channel_length ic in
+    let buf = Bytes.create len in
+    let _ = really_input ic buf 0 len in
+    Some buf
+  with Sys_error _ -> None
+
 let handle route directory request =
   let route_without_wildcard = strip_suffix route "*" in
   let url_without_route = strip_prefix request.url route_without_wildcard in
   let path = directory ^ "/" ^ url_without_route in
-  let path = if ends_with path "/" then path ^ "/index.html" else path in
+  let path = if ends_with path "/" then path ^ "index.html" else path in
 
   match contains path ".." with
   | true -> response 404 "Not Found"
   | false -> (
-      try
-        let ic = open_in_bin path in
-        let len = in_channel_length ic in
-        let buf = Bytes.create len in
-        let _ = really_input ic buf 0 len in
-        let response = response_binary 200 buf in
-        add_header response "Content-Type" "text/html"
-      with Sys_error e -> response 404 e)
+      match serve path with
+      | Some b ->
+          let res = response_binary 200 b in
+          add_mime_type res path
+      | None -> (
+          match serve (path ^ "/index.html") with
+          | Some _ ->
+              let res = response 302 "Redirect" in
+              add_header res "Location" (request.url ^ "/")
+          | None -> response 404 "Not Found"))

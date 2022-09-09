@@ -1,0 +1,26 @@
+let default = "application/octet-stream"
+
+let from extension =
+  match extension with
+  | "css" -> "text/css"
+  | "html" | "htm" -> "text/html"
+  | "js" -> "text/javascript"
+  | "txt" -> "text/plain"
+  | "bmp" -> "image/bmp"
+  | "gif" -> "image/gif"
+  | "jpeg" | "jpg" -> "image/jpeg"
+  | "png" -> "image/png"
+  | "webp" -> "image/webp"
+  | "svg" -> "image/svg+xml"
+  | "ico" -> "image/vnd.microsoft.icon"
+  | "json" -> "application/json"
+  | "pdf" -> "application/pdf"
+  | "zip" -> "application/zip"
+  | "mp4" -> "video/mp4"
+  | "ogv" -> "video/ogg"
+  | "webm" -> "video/webm"
+  | "ttf" -> "font/ttf"
+  | "otf" -> "font/otf"
+  | "woff" -> "font/woff"
+  | "woff2" -> "font/woff2"
+  | _ -> default
