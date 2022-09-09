@@ -1,2 +1,3 @@
 (test
- (name HumphreyJr))
+ (name test)
+ (libraries HumphreyJr unix))
