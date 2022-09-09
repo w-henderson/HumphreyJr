@@ -1,0 +1,24 @@
+on:
+  - push
+
+name: Test
+
+jobs:
+  test:
+    name: Test Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.08.x
+
+      - run: opam install . --deps-only --with-doc --with-test
+
+      - run: opam exec -- dune build
+
+      - run: opam exec -- dune runtest
