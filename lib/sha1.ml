@@ -39,27 +39,20 @@ let process_chunk bytes chunk_id (h0, h1, h2, h3, h4) =
   let c = ref !h2 in
   let d = ref !h3 in
   let e = ref !h4 in
-  let f = ref 0l in
-  let k = ref 0l in
   let k_values = [| 0x5A827999l; 0x6ED9EBA1l; 0x8F1BBCDCl; 0xCA62C1D6l |] in
   let rec mainloop = function
     | 80 -> ()
     | i ->
-        (match i with
-        | i when i < 20 ->
-            f := !b &&& !c ||| (~~~(!b) &&& !d);
-            k := k_values.(0)
-        | i when i < 40 ->
-            f := !b ^^^ !c ^^^ !d;
-            k := k_values.(1)
-        | i when i < 60 ->
-            f := !b &&& !c ||| (!b &&& !d) ||| (!c &&& !d);
-            k := k_values.(2)
-        | _ ->
-            f := !b ^^^ !c ^^^ !d;
-            k := k_values.(3));
+        let f, k =
+          match i with
+          | i when i < 20 -> (!b &&& !c ||| (~~~(!b) &&& !d), k_values.(0))
+          | i when i < 40 -> (!b ^^^ !c ^^^ !d, k_values.(1))
+          | i when i < 60 ->
+              (!b &&& !c ||| (!b &&& !d) ||| (!c &&& !d), k_values.(2))
+          | _ -> (!b ^^^ !c ^^^ !d, k_values.(3))
+        in
         let temp =
-          left_rot !a 5 +++ !f +++ !e +++ !k +++ Bytes.get_int32_be words (i * 4)
+          left_rot !a 5 +++ f +++ !e +++ k +++ Bytes.get_int32_be words (i * 4)
         in
         e := !d;
         d := !c;
